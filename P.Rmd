@@ -1,0 +1,1213 @@
+---
+title: "Proyecto Final"
+author: "Chávez Bartolo Julieta Janeth"
+date: "20/1/2022"
+output: 
+  html_document: 
+    highlight: zenburn
+    theme: spacelab
+---
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```
+#LIBRERIAS
+library("skimr")
+library(fdth)
+library(naniar)
+library(BHH2)
+library(agricolae)
+```
+
+# Evaluación del recurso eólico
+
+##### Proyecto de Astroestadística, Chávez Bartolo Julieta Janeth
+
+## INTRODUCCIÓN 
+#### & Problema comercial
+Actualmente resolver ecuaciones de fluidos para lugares abiertos parece ser una tarea imposible. Por ello la ciencia de datos nos brinda una herramienta poderosisíma que está dando grandes resultados en la vida moderna, si bien, no resolveré un método en especifíco con este trabajo mi objetivo será mostrar lo que es posible lograr con un conjunto de datos de un fluido como es el aire.
+
+Hoy día la producción de energía eólica ya parece ser un negocio viable, pues sus costos han disminuido considerablemente gracias al desarrollo tecnológico y a la implementación de proyectos para la evaluación del recurso. Como vemos en la Figura 1.
+
+
+![texto_alternativo](/home/chicarata/Documentos/Eólica/Eva/1.jpg){width=width height=height}
+
+Sin embargo el costo de un proyecto de instalación de turbina eólica sigue siendo alto en cualquier sentido, desde la máquina hasta la mano de obra. Por ello es necesaria una correcta evaluación del recurso eólico en la zona  antes de aventurarnos a instalar una turbina ya que de no hacerlo las pérdidas económicas podrían ser devastadoras e irreversibles.En la figura 2 podemos ver los porcentajes de costos como de inversión inicial.
+
+
+![texto_alternativo](/home/chicarata/Documentos/Eólica/Eva/2.jpg){width=width height=height}
+
+
+
+
+
+### Curva de Potencias
+ 
+Esta es la relación, proporcionada por el fabricante, que existe entre la velocidad de viento y la potencia que se podría producir. Claro que esto en la vida real no es tan simple, pues el tipo de flujo de viento dependerá enormemente. Así que es una mera simplificación. El estudio de tipo de flujo es un estudio a parte. En este trabajo estaré considerando que el tipo de flujo es laminar durante el tiempo de medición.
+
+El aerogenerador que se elija deberá tener una curva de potencias que encaje con la distribución de  velocidades de viento del citio en el que se desee poner el aerogenerador. Ya que por ejemplo, si se omite este paso es posible que gastemos al rededor $20$ millones de pesos en la turbina, pero sea inservible para el lugar porque podría ser que las velocidades del sitio nunca sean suficientes para la velocidad de arranque o bien es posible que sean demasiado fuertes como para romperlo, forzando al aerogenerador a estar detenido la mayor parte del tiempo como mecanismo de seguridad. Este es el ejemplo perfecto de cuando se tiene un gran recurso eólico, pero no se puede aprobechar a causa de un mal estudio. En la siguiente figura podrémos ver una ejemplificación general de la curva de potencias de un aerogenerador.
+
+
+
+![texto_alternativo](/home/chicarata/Documentos/Eólica/Eva/curve.jpg){width=width height=height}
+
+
+
+
+### Datos
+
+Los datos me fueron proporcionados por el Dr.Oswaldo Rodriguez del instituto de energías renovables,Morelos, UNAM. Estos datos provienen de un aerogenerador ubicado en una granja eólica en Oaxaca.
+
+Las mediciones se realizaron durante el invierno, en el mes de noviembre de 2017. Y se registraron cada 10 minutos, eso nos da 30X24X6= 4320 mediciones.
+Al registrarse datos en un intervalo de 10 segundos, se registran cantidades de las cuales se guarda la máxima, la mínica, el promedio y la desviación estándar. Donde las columnas son:
+
+**YYYY:** Representa el año, 2017. El tipo de variable es cuantitativa y su escala es de intervalo.
+
+**DD:** El día. El tipo de variable es cualitativa y su escala nominal. Se usan códigos numéricos.
+
+**MM:* El mes, noviembre denotado por 11. El tipo de variable es cualitativa y su escala es ordinal.
+
+**hh:** Denota la hora entera. Va de [00,23] en unidades enteras. El tipo de variable es cuantitativa y su escala es de intervalo.
+
+**mm:** Denota los minutos. Va de [00,50] en unidades de 10 en 10.El tipo de variable es cuantitativa y su escala es de intervalo. Variable discreta.
+
+**WS_Xm_mean:** Velocidad del viento a la altura X en metros. Hay registros para X=80m, X=60m,X=40m y X=20m.A la altura de 80m se tienen 2 datos, de la torre A y la torre B. El tipo de variable es cuantitativa y su escala es de razon. Variable continua. 
+
+**WD_X-2m_mean:** La potencia producida en kW/hora, notamos que es X-2 ya que no necesariamente el medidor de velocidad está al centro de la turbina eólica. En el modelo Vestas de aerogenerador está 2 metros abajo. Solo hay registros para X=60m y X=80m.El tipo de variable es cuantitativa y su escala es de razon. Variable continua.
+
+**temp_Ym_mean:** la temperatura en grados centígrados
+Para estas cantidades notemos que están medidas a Y=15m, Y=40m y Y=80m. De modo que solo había un único medidor a esta altura. El tipo de variable es cuantitativa y su escala es de razon. Variable continua.
+
+**RH_15m_mean:** la presión en hectopascales. (1 hPa= 100 Pa). 
+La humedad relativa
+El tipo de variable es cuantitativa y su escala es de razon. Variable continua.
+
+**P_15m_mean:**  Representa la irradiancia. La radiación solar medida en cada una de las estaciones meteorológicas es ofrecida en unidades de potencia y está en vatios por metro cuadrado (W/m²)
+El tipo de variable es cuantitativa y su escala es de razon. Variable continua.
+
+**Rad_80m_mean:** intenté explorar esta columna para darme una idea de lo que pudiera ser, pero no tuve éxito ya que son puros ceros. Al investigar esta medida Rad, en energía eólica representa los giros por segundo de las aspas. De modo que es un dato que no usaría pues evidentemente tiene problemas de registro. De modo que será eliminada.
+
+**DENSIDAD_15m_mean:** la densidad del viento [Kg/m^3]. El tipo de variable es cuantitativa y su escala es de razon. Variable continua.
+
+**BATERIA_mean:**  realmente desconozco la función de esta columna. Será eliminada.
+
+# 1 Ańalisis Exploratorio de Datos
+
+Cargemos el conjunto de datos
+
+
+
+
+
+
+```{r}
+data <- read.table(file = "M06_201711.txt", header = TRUE, fill=TRUE)
+head(data)
+```
+Eliminemos las columnas llenas de NANś.
+
+Para no estar cargando con los datos, quedémonos solamente con los registros promedio de cada variable. Esto lo hago bajo la justificación de que es posible ignorar el error de cada medición porque este error, denotado por la desviación estándar, será mucho menor la desviación estándar del conjunto de datos. Támbién se eliminarán las variables con problemas de registo.
+
+```{r}
+data = data[-1,]
+data = data[-1,]
+data$WS_20m_min = NULL
+data$WS_20m_max = NULL
+data$WS_20m_stdev = NULL
+data$WS_40m_min = NULL
+data$WS_40m_max = NULL
+data$WS_40m_stdev = NULL
+data$WS_60m_min = NULL
+data$WS_60m_max = NULL
+data$WS_60m_stdev = NULL
+data$WS_80m_min = NULL
+data$WS_80m_max = NULL
+data$WS_80m_stdev = NULL
+data$WS_80mA_min = NULL
+data$WS_80mA_max = NULL
+data$WS_80mA_stdev = NULL
+data$WS_80mB_min = NULL
+data$WS_80mB_max = NULL
+data$WS_80mB_stdev = NULL
+
+data$WD_78m_min = NULL
+data$WD_78m_max = NULL
+data$WD_78m_stdev = NULL
+data$WD_58m_min = NULL
+data$WD_58m_max = NULL
+data$WD_58m_stdev = NULL
+data$P_15m_min = NULL
+data$P_15m_max = NULL
+data$BATERIA_min = NULL
+data$BATERIA_mean = NULL
+data$BATERIA_max = NULL
+data$BATERIA_stdev = NULL
+data$DENSIDAD_15m_max = NULL
+data$DENSIDAD_15m_min = NULL
+data$DENSIDAD_15m_stdev = NULL
+data$Rad_80m_min = NULL
+data$Rad_80m_max = NULL
+data$Rad_80m_stdev = NULL
+data$Rad_80m_mean = NULL
+data$P_15m_min = NULL
+data$P_15m_max = NULL
+data$P_15m_stdev = NULL
+data$RH_15m_stdev = NULL
+data$RH_15m_min = NULL
+data$RH_15m_max = NULL
+data$temp_15m_stdev = NULL
+data$temp_15m_min = NULL
+data$temp_15m_max = NULL
+data$temp_40m_stdev = NULL
+data$temp_40m_min = NULL
+data$temp_80m_max = NULL
+data$temp_80m_stdev = NULL
+data$temp_80m_min = NULL
+data$temp_80m_max = NULL
+data$YYYY = NULL
+head(data,3)
+```
+
+Antes de hacer operaciones cambiemos el tipo de dato.
+```{r}
+for (i in 1:18) {
+    print(class(data[,i] ))
+}
+
+```
+
+
+Cada columna tiene tipo de dato character, de modo que lo cambiaré a numeric para facilitar su manejo.
+
+Hagamos un ciclo for en el que convierta cada columna en numeric.
+
+```{r}
+for (i in 1:18) {
+    data[,i] <- as.numeric(data[,i] )
+}
+
+```
+
+Veamos que efectivamente se hizo el cambio de variable.
+
+```{r}
+for (i in 1:18) {
+    print(class(data[,i] ))
+}
+
+```
+
+
+
+
+
+```{r}
+attach(data) # con el attach ya puedo accesar a los nombres de las variables
+
+```
+
+
+
+
+
+```{r}
+library("skimr")
+skimr::skim(data)
+```
+De aquí podemos observar que el conjunto de datos está completo de modo que no hay datos faltantes o NANś que nos puedan causar problemas más adelante.
+
+
+
+
+```{r}
+library(naniar)
+vis_miss(data) 
+```
+
+
+
+
+
+## HABLEMOS DE VELOCIDADES DE VIENTO
+
+Veamos la curva de potencias del aerogenerador que nos interesaría poner en el citio, un modelo Vestas de 2MW. De esta tabla podemos ver que la velocidad de arranque, en la cuál se comienza a producir potencia, es a los 3 m/s.
+Potencia nominal:
+2,000.0 kW
+Rangos de potencia flexibles:
+-
+Velocidad del viento:
+4.0 m/s
+Velocidad nominal del viento:
+15.0 m/s
+Velocidad del viento de corte:
+25.0 m/s
+Velocidad del viento de supervivencia:
+60.0 m/s
+Wind zone (DIBt):
+-
+Wind class (IEC):
+-
+
+```{r}
+cpot<- read.csv("./Datos/Vestas.csv", header=T);cpot
+```
+
+
+Me atrevo a unir los puntos de relaciones de velocidades con potencia generada porque en teoría esta debería ser una curva continua. Ya que para toda velocidad de viento, variable continua, existiría una potencia generada.
+
+```{r}
+plot(cpot[,1], cpot[,2], type = "l",
+     col = "red", ylab = "Potencia kW", xlab = "Velocidad de viento m/s")     # Color de la línea
+
+# Agregando puntos
+points(cpot[,1], cpot[,2],          # Coordenadas
+       pch = 21,      # Símbolo
+       cex = 2,       # Tamaño del símbolo
+       bg = "green",  # Color de fondo del símbolo
+       col = "blue",  # Color del borde del símbolo
+       lwd = 3)       # Ancho del borde del símbolo
+```
+Podemos decir que la velocidad de corte es a los 25 m/s. Y la potencia nominal es de 2MWatts, se llega a esta potencia a los aproximadamente en el rango [13,25) m/s. Este es el intervalo que nos interesa para que se pueda extraer la mayor energía del viento. Veamos si las velocidades del citio coinciden para que se instale un modelo Vestas 2MW.
+
+```{r}
+library(fdth)
+(tabla_contm<- fdt(na.omit(WS_80mA_mean),breaks="FD",right=T))
+```
+De esto,del quinto renglón, podemos decir que para la torre A, a 80m, el 13.03% de los días tienen velocidades tan vajas que no será suficiente para el arranque, sin embargo, el resto, el 86.97% de los días estará produciendo potencia, pues ni siquiera se detendrá por una velocidad de corte, velocidad en que la maquína se debe detener por seguridad. Sin embargo hasta el intervalo  (13.276,13.845]  se tiene una frecuencia acumulada del 98.06%, de modo que tan solo el 1.94% del tiempo se estuvo en la potencia nominal.
+
+
+Descartaré las alturas de 20,, ya que este modelo tiene un radio de 40m en sus aspas, lo que interpretamos como la altura mínima a la cual se debe ubicar el aerogenerador.
+
+```{r}
+library(fdth)
+(tabla_contm<- fdt(na.omit(WS_60m_mean),breaks="FD",right=T))
+```
+
+De esto,del sexto renglón, podemos decir que para 60m, el 13.56% de los días tienen velocidades tan vajas que no será suficiente para el arranque, sin embargo, el resto, el 86.44% de los días estará produciendo potencia, pues ni siquiera se detendrá por una velocidad de corte, velocidad en que la maquína se debe detener por seguridad. Sin embargo hasta el intervalo  (12.529,13.064]  se tiene una frecuencia acumulada del 97.78%, de modo que tan solo el 2.22% del tiempo se estuvo en la potencia nominal.
+
+```{r}
+library(fdth)
+(tabla_contm<- fdt(na.omit(WS_40m_mean),breaks="FD",right=T))
+```
+De esto,del sexto renglón, podemos decir que para 40m, el 22.82% de los días tienen velocidades tan vajas que no será suficiente para el arranque, sin embargo, el resto, el 77.18%% de los días estará produciendo potencia, pues ni siquiera se detendrá por una velocidad de corte, velocidad en que la maquína se debe detener por seguridad. Sin embargo hasta el intervalo  (12.731,13.254]   se tiene una frecuencia acumulada del 98.82%, de modo que tan solo el 1.28% del tiempo se estuvo en la potencia nominal.
+
+
+En este punto me podría aventurar a decir que el lugar recomendable para poner el aerogenerados es a la altura de 60m, estando en potencia nominal el 2.22% del tiempo. Sin embargo, irémos desmenuzando este punto más adelante. 
+
+
+Hagamos el gráfico de caja y veamos qué podemos decir de la distribución de velocidades de viento.
+
+```{r}
+boxplot(WS_60m_mean,horizontal = T,col="yellow")
+
+```
+```{r}
+quantile(na.omit(WS_60m_mean), probs = c(0.25,0.50,0.75))
+```
+Para 60m: Podemos decir que la mediana está simétrica al primer y al tercer cuartil. Como el primer cuartil está en 3.95 y el tercero en 8.3, podemos decir que el 50% de las velocidades del viento a 80m está en este rango, suficiente para producir potencia pero insuficiente para la potencia nominal. Las velocidades de viento mayores a 15m/s podemos considerarlas átipicas.
+
+```{r}
+boxplot(WS_80mA_mean,horizontal = T,col="lightgreen")
+
+```
+
+```{r}
+quantile(na.omit(WS_80mA_mean), probs = c(0.25,0.50,0.75))
+```
+Para 80m: Podemos decir que la mediana está simétrica al primer y al tercer cuartil. Como el primer cuartil está en 4.14 y el tercero en 8.8, podemos decir que el 50% de las velocidades del viento a 80m está en este rango, suficiente para producir potencia pero insuficiente para la potencia nominal. Las velocidades de viento mayores a 15m/s podemos considerarlas átipicas.
+
+```{r}
+boxplot(WS_40m_mean,horizontal = T,col="red")
+
+```
+```{r}
+quantile(na.omit(WS_40m_mean), probs = c(0.25,0.50,0.75))
+```
+
+Del gráfico de cajas podemos cambiar de postura y decir que el 50% de los datos tendrán velocidades más altas a una altura de 80m. Estando en el rango de arranque entre [4.14,8.8] m/s. Pero algo sí que podemos hacer y es descartar la altura de 40m.
+
+Para 80m:
+
+El promedio es 6.58 m/s.
+
+
+
+Varianza y desciación estándar:
+
+```{r}
+var(na.omit(WS_80mA_mean)); sd(na.omit(WS_80mA_mean))
+```
+
+
+Coeficiente de asimetría:
+```{r}
+(j3<- moments::skewness(WS_80mA_mean,na.rm=T))
+```
+
+Coeficiente de curtosis:
+```{r}
+(j4<- moments::kurtosis(WS_80mA_mean,na.rm=T))
+```
+
+Como es menor a tres, podemos decir que será una distribución platycúrtica, o ancha respectro a la distribición normal.
+
+
+
+
+```{r}
+library(BHH2)
+
+dotPlot(na.omit(WS_80mA_mean),main="Diagrama de puntos (muestra aleatoria)",xlab="Velocidad de viento",pch=16)
+```
+
+```{r}
+library(agricolae)
+hist_80<- hist(WS_80mA_mean)
+ogive.freq(hist_80,main="Ojiva (Velocidades a 80m)",xlab="Límite superior de
+           la clase",ylab="Pi (%)")  
+```
+
+Y el diagrama de tallo y ojas. Evaluando hasta el primer decimal:
+
+```{r}
+stem(WS_80mA_mean, scale=1)  # valor por default
+```
+
+Se ve claramente que la distribución es asimétrica a la derecha.
+
+Esto lo confirmamos del histograma:
+```{r}
+par(mfrow=c(1,2))
+hist(WS_80mA_mean,col=rainbow(6), main="Vel. viento a 80m", prob=T)
+hist(WS_80mA_mean,col=rainbow(6), main="Vel. viento a 80m", prob=F)
+```
+
+```{r}
+par(mfrow=c(1,2))
+hist(WS_60m_mean,col=rainbow(6), main="Vel. viento a 60m", prob=T)
+hist(WS_60m_mean,col=rainbow(6), main="Vel. viento a 60m", prob=F)
+
+
+
+
+```
+
+
+### Variable cuantitativa vs variable cuantitativa: ASOCIACION ENTRE VARIABLES de velocidad de viento
+
+
+
+```{r}
+vientos=cbind(WS_80mA_mean,WS_60m_mean,WS_40m_mean,WS_20m_mean)
+round(cor(vientos),digits = 2) 
+```
+
+
+
+
+```{r}
+ 
+pairs(~WS_80mA_mean+WS_60m_mean+WS_40m_mean+WS_20m_mean, data = mtcars)
+```
+
+
+De la gráfica de disperción y de las correlaciones podemos concluir que las relaciones van disminuyendo conforme la diferencia en altura. Lo cual tiene sentido, ya que los flujos de aire cambian con la altura.
+
+
+### Interpretemos a las velocidades como una valiable cualitativa.
+Como nos interesa la clasificación del viento en sus velocidades de arranque, nominal y de corte, convirtamos este conjunto de datos en una variable cualitativa.
+
+
+
+```{r}
+TipoViento80 <- NA
+TipoViento80[WS_80mA_mean >= 0 & WS_80mA_mean <= 3] <- "Nulo"   
+TipoViento80[WS_80mA_mean> 3 & WS_80mA_mean <= 13] <- "Arranque" 
+TipoViento80[WS_80mA_mean> 13 & WS_80mA_mean <= 25] <- "Nominal"
+TipoViento80[WS_80mA_mean> 25 & WS_80mA_mean <= 60] <- "Corte"
+TipoViento80[WS_80mA_mean> 60] <- "Peligro"
+
+
+
+TipoViento60 <- NA
+TipoViento60[WS_60m_mean >= 0 & WS_60m_mean <= 3] <- "Nulo"   
+TipoViento60[WS_60m_mean> 3 & WS_60m_mean <= 13] <- "Arranque" 
+TipoViento60[WS_60m_mean> 13 & WS_60m_mean <= 25] <- "Nominal"
+TipoViento60[WS_60m_mean> 25 & WS_60m_mean <= 60] <- "Corte"
+TipoViento60[WS_60m_mean> 60] <- "Peligro"
+ 
+
+TipoViento40 <- NA
+TipoViento40[WS_40m_mean >= 0 & WS_40m_mean <= 3] <- "Nulo"   
+TipoViento40[WS_40m_mean> 3 & WS_40m_mean <= 13] <- "Arranque" 
+TipoViento40[WS_40m_mean> 13 & WS_40m_mean <= 25] <- "Nominal"
+TipoViento40[WS_40m_mean> 25 & WS_40m_mean <= 60] <- "Corte"
+TipoViento40[WS_40m_mean> 60] <- "Peligro"
+
+
+
+
+TipoViento20 <- NA
+TipoViento20[WS_20m_mean >= 0 & WS_20m_mean <= 3] <- "Nulo"   
+TipoViento20[WS_20m_mean> 3 & WS_20m_mean <= 13] <- "Arranque" 
+TipoViento20[WS_20m_mean> 13 & WS_20m_mean <= 25] <- "Nominal"
+TipoViento20[WS_20m_mean> 25 & WS_20m_mean <= 60] <- "Corte"
+TipoViento20[WS_20m_mean> 60] <- "Peligro"
+
+```
+Ahora el análicis se centrará en la comparación de variables cualitativas y cuantitativas.
+
+# A 80m de altura
+
+```{r}
+# Otra manera
+par(mfrow=c(1,1))   # ventana original
+library(paletteer)
+library(ggthemes)
+
+boxplot(TipoViento80=="Nulo",
+        TipoViento80=="Arranque",
+        TipoViento80=="Nominal",
+        TipoViento80=="Corte",
+        TipoViento80=="Peligro",
+        col=paletteer_c("ggthemes::Sunset-Sunrise Diverging", 3),names=c("Nulo","Arranque","Nominal","Corte","Peligro"))
+
+
+```
+De los gráficos de cajas podemos observar que la mayoría de las velocidades de viento se clasifican como velocidades de arranque, es decir, que van de [3,13)m/s. Pasa algo bien curioso y es que en estas clasificaciones la media, el primer cuartil y el tercero parecen coincidir. También podemos decir que las velocidades no son lo suficientemente altas como para que se detenga por seguridad. Y que este parece ser un buen citio si estamos evitando que el aerogenerador se rompa al haber flujos que exedan los 60 m/s.
+
+
+
+```{r}
+library(ggplot2)
+ggplot(data, 
+       aes(x = as.factor(TipoViento80), 
+           y = WD_78m_mean)) +
+  geom_boxplot() +
+ labs(title = "Distribución de la potencia generada por tipo de viento")
+
+```
+Interpretar este gráfici podría ser un reto, debido a que no conocemos a fondo la manera del registro de datos. Mi explicación para los datos nulos que en la gráfica queneran potencia es que al ser tipo arranque la clasificación más común durante un lapso se mantuvo en movimiento las aspas generando potencia, pero solo por un breve lapso de tiempo la velocidad de viento dismunuyó considerablemente a tipo Nulo, sin embargo las aspas ya tenían suficiente momento de inercia, de modo que al momento de registrar la velocidad de viento, las aspas no estaban detenidas del todo por eso se registró potencia. Vamos a continuación cómo esta situación puede ser posible.
+
+```{r}
+head(TipoViento80,50)
+```
+
+
+
+
+
+
+```{r}
+library(ggplot2)
+
+# Distribucion del Ozono 
+
+nivel.viento<- as.factor(TipoViento80)   # para hacerla categorica
+
+ggplot(data, aes(x = DD, 
+                     y = WD_78m_mean, 
+                     color=nivel.viento)) +
+  geom_point() +
+  labs(title = "Distribución de la potencia generada por tipo de viento durante noviembre",ylab="Potencia kW")
+```
+DD reprencenta los 30 días de noviembre.
+
+
+
+
+
+
+```{r}
+library(scales)
+dataV<-cbind(TipoViento80,WD_78m_mean)
+
+ggplot(data, 
+       aes(y = factor(TipoViento80), 
+           x = WD_78m_mean,color = nivel.viento)) +
+  geom_jitter() + 
+  labs(title = "Potencia registrada por tipo de viento")+
+  labs(y= "Tipo de viento", x = "Potencia kW")+
+  theme_minimal() 
+```
+
+
+
+
+Creo que en este punto es conveniente analizar si la potencia tiene relación con la densidad del aire como dice la teoria y esta última con la temperatura, con la irradiancia y con la humedad. Si pudieramos demostrarlo, pobablemente estas variables nos sirvan para hacer regresión líneal más adelante.
+
+
+```{r}
+dataDen=cbind(WS_80mA_mean,WD_78m_mean,DENSIDAD_15m_mean)
+
+round(cor(dataDen),digits = 2) 
+pairs(~WS_80mA_mean+WD_78m_mean+DENSIDAD_15m_mean, data = mtcars)
+```
+
+No hay correlación entre la variable densidad y la velocidad del viento, y la correlación entre potencia y densidad es de apenas 0.11.
+
+
+
+
+```{r}
+dataDen=cbind(WS_80mA_mean,WD_78m_mean,DENSIDAD_15m_mean,RH_15m_mean,P_15m_mean,temp_80m_mean)
+
+round(cor(dataDen),digits = 2) 
+pairs(~WS_80mA_mean+WD_78m_mean+DENSIDAD_15m_mean+RH_15m_mean+P_15m_mean+temp_80m_mean, data = mtcars)
+```
+De los coeficientes de correlación podemos decir que la potencia tiene mayor correlación con la irradiancia y la temperatura. Y por el coeficiente de -0.28 podemos decir que la humedad relativa influye inversamente en la velocidad de viento.
+
+
+
+
+# 2 Inferencia Estádistica Clásica
+Tomaré como variable cuantitativa a la velocidad de viento a 80m. Cuyo histograma es:
+```{r}
+hist(WS_80mA_mean,probability=T,col="grey50",
+     main="Concentración de ozono en NY",
+     xlab="Ozono (ppm)")  # histograma cuyo eje vertical esta en escala
+# de "probabilidades".
+
+lines(density(WS_80mA_mean),lwd=2,col="blue")   # curva de densidad de probabilidad
+```
+
+
+
+
+```{r}
+# Para darnos una idea aproximada del perfil
+library(fitdistrplus)
+plotdist(WS_80mA_mean, histo = TRUE, demp = TRUE)
+```
+
+Realmente no se me viene ninguna distribución a la mente de tan solo ver el perfil de la distribución así que usaré la gráfica de kullen & Frey. Esta propone distribuciones comparando el coeficiente de asímetria y de kurtósis.
+```{r}
+descdist(data = WS_80mA_mean, graph = TRUE)
+```
+De aquí me atrevo a proponer a la distribución betta y weibull. Incluso me arriesgaría con la distribución gamma.
+Resulta que en el área de energía eólica para las velocidades de viento se le suele asociar la distribución Weibill, veamos si este será el caso.
+
+```{r}
+y<-WS_80mA_mean
+
+```
+
+```{r}
+library(univariateML)
+library(dplyr)
+library(tibble)
+
+```
+
+
+
+
+
+
+```{r}
+comparacion_aic <- AIC(
+  mlbetapr(y),
+  mlexp(y),
+  mlinvgamma(y),
+  mlgamma(y),
+  mllnorm(y),
+  mlrayleigh(y),
+  mlinvgauss(y),
+  mlweibull(y),
+  mlinvweibull(y)
+  #mlbeta(y)
+  #mllgamma(y) 
+
+)
+comparacion_aic %>% rownames_to_column(var = "distribución") %>% 
+  arrange(AIC)
+```
+
+De aquí se escogería el que tenga el coeficiente de AIC más pequeño. Que serían en este orden, Distribución Weibull, rayleigth y gamma.
+
+
+Para estimar puntualmete con el método de máxima verosimilitud, usaré esta función:
+
+
+
+
+Los parámetros para la distribución gamma son:
+
+
+```{r}
+### METODO IIa: estimacion por el "metodo de MLE" (funcion "fitdistr" de R)
+
+library(MASS)
+viento_gamma<- fitdistr(na.omit(y), densfun="gamma") # lo hace con MLE
+viento_gamma
+```
+
+
+
+
+```{r}
+viento_weibull<- fitdistr(na.omit(y), densfun="weibull") # lo hace con MLE
+viento_weibull
+```
+
+
+```{r}
+# Usamos las distribuciones como las nombra univariateML:
+
+par(mfrow=c(1,1))
+hist(y,main = "Precipitación en México (mm) durante 2020",
+     freq = FALSE)
+
+lines(mlgamma(y), lwd = 2, lty = 2, col = "red")
+lines(mlweibull(y), lwd = 2, lty = 3, col="green")
+lines(density(y),lwd=2,col="blue")   # curva de densidad de probabilidad
+legend(x = 12, y = 0.08, legend = c("gamma", "weibull"),
+       col = c("red", "green"), lty = 1:3)
+rug(y)   # representacion 1D de los datos
+```
+
+Por el criterio de AIC, la mejor distribución a ajustar concuerda con el que se hace comunmente en la práctica y es la distribución de probabilidad weibull.
+
+
+# 2.2 Estimación  de intervalos de confianza y pruebas de hpótesiss
+Nos interesa inferir si realmente las alturas a los 80m son mayores que a los 60 metros.
+Pero antes que nada, chequemos si estos datos satisfacen uno de los supuestos básicos para la inferencia cclásica parámetrica, que es el de normalidad.
+
+```{r}
+y=WS_80mA_mean
+z=WS_60m_mean
+boxplot(y,z,horizontal = T,main="Velocidades de viento",
+        names=c("80 metros","60 metros"))
+
+
+```
+
+
+Visualmente la diferencia en el promedio no parece ser avismal.
+
+Verifiquemos si normalidad se cumple:
+
+En las pruebas gráficas entre más se acerque a la línea recta es más probable la normalidad.
+
+En las pruebas estadísticas la hipotesis nula es que la distribución sea normal. Generalmente se hacen varias pruebas. Checa p-value. Recuerda que si es mayor a 0.05 en general no se rechaza hiótesis nula H0, en este caso la aceptaríamos por lo que habría normalidad.
+
+**Pruebas para y=Velocidad a 80m de altura**
+```{r}
+qqnorm(y,pch=16)       # grafica QQ (cuantil-cuantil)
+qqline(y,lwd=2,col=2)
+```
+
+
+```{r}
+library(fBasics)
+lillieTest(y) # prueba de hipotesis de bondad de ajuste
+```
+La prueba lilitest() parece indicar que no se cumple la normalidad, ya que con p-value<=0.01 en general se rechaza hipótesis nula.
+
+```{r}
+# Otras pruebas para normalidad
+shapiro.test(y)
+```
+De nuevo se rechaza normalidad
+
+Transformamos mediante la técnica de Box-Cox para “corregir” la normalidad.
+
+```{r}
+library(DescTools)
+lambda.opt<- BoxCoxLambda(y, method= "loglik", lower=-5, upper=5); lambda.opt
+library(nortest)
+lillie.test((y^(lambda.opt)-1)/(lambda.opt))     # no hay normalidad
+```
+Por lo que transformando mediante BoxCox y con el valor óptimo de lambda sigue sin haber normalidad.
+
+```{r}
+
+```
+
+
+**Pruebas para z=Velocidad a 60m de altura**
+
+```{r}
+qqnorm(z,pch=16)       # grafica QQ (cuantil-cuantil)
+qqline(z,lwd=2,col=2)
+```
+
+
+
+
+```{r}
+lillieTest(z) # prueba de hipotesis de bondad de ajuste
+```
+
+La prueba lilitest() parece indicar que no se cumple la normalidad, ya que con p-value<=0.01 en general se rechaza hipótesis nula.
+```{r}
+# Otras pruebas para normalidad
+shapiro.test(z)
+```
+De nuevo se rechaza normalidad
+Transformamos mediante la técnica de Box-Cox para “corregir” la normalidad
+
+
+```{r}
+
+library(DescTools)
+lambda.opt<- BoxCoxLambda(y, method= "loglik", lower=-5, upper=5); lambda.opt
+library(nortest)
+lillie.test((z^(lambda.opt)-1)/(lambda.opt))   
+```
+
+Por lo que transformando mediante BoxCox y con el valor óptimo de lambda sigue sin haber normalidad.
+
+
+
+
+
+
+Como no se llegó a satisfacer el supuesto de normalidad usarémos nuestra mejor aproximación para los intervalos de confianza y pruebas de hipótesis.
+
+**Muestras independientes**
+Empecemos abordadndo el problema como muestras independientes, pensando en que pueden llegar a ser independientes si los flujos de viento sontotalmente diferentes a 60m que a 80m. Hidrodinámicamente sabemos que esta suposición sería muy poco probable, pero veamos qué podemos obtener bajo este supuesto.
+
+Como lo que queremos es verificar si efectivamente las velocidades de viento son mayores a 80m, proponemos la hiótesis nula y la alternativa como:
+
+**Hipótesis nula: La velocidad promedio a 80m es estadísticamente igual que a los 60m de altura.**
+
+**Hipótesis alternativa: La velocidad promedio a 80m vs. a los 60m son estadísticamente diferentes.**
+ 
+$$H_0: \mu(80m) = \mu(60m)$$
+$$Ha: \mu(80m)> \mu(60m)$$
+
+
+O visto de otra forma:
+$$H_0: \mu(80m) -\mu(60m)=0$$
+$$Ha: \mu(80m)- \mu(60m)>0$$
+
+Hagamos la prueba de hipotesis PARAMETRICA para medias con varianza poblacional desconocida. SUPUESTO: normalidad y muestras independientes
+
+Como no conocemos la varianza poblacional usaremos entonces el estádistico t, que se distribuye como una t de student.
+```{r}
+prueba1<- t.test(y,z,alternative="greater",mu=0,paired=F,var.equal = T,conf.level = 0.997)
+prueba1
+```
+El intervalo de confianza es [0.2536346, Inf) y no pasa por el cero, indicando que del 99.7% de todos los intervalos posible no incluyen al cero, lo cual está a favor de la hipótesis alternativa. El estádisctico de prueba es t = 6.6368, y el valor p=p-value = 1.699e-11 de modo que podemos rechazar la hipótesis nula. Por lo que sí hay diferencias en las velocidades de viento.
+
+
+Cambiemos un poco el desarrollo del problema:
+Prueba de hipotesis PARAMETRICA para medias con varianza poblacional desconocida. SUPUESTO: normalidad y muestras independientes OJO: los diagramas de caja-brazos no muestran una diferencia en variabilidad. Lo verificamos mediante una prueba de hipotesis:
+
+Aqui la hipótesis nula es:
+H_0=Es que las varianzas son iguales. El estadístico de prueba es F-test y se distribuye bajo Fisher–Snedecor.
+```{r}
+vartest1<- var.test(y,z,ratio=1,alternative="two.sided",conf.level = 0.98)
+vartest1
+```
+
+Al ser el valor p-value = 0.0001523, las varianzas NO son estadisticamente iguales.
+
+De modo que ahora tenemos una prueba de hipotesis PARAMETRICA para medias con varianza poblacional desconocida. SUPUESTO: normalidad,muestras independientes y varianzas distintas
+```{r}
+prueba2<- t.test(y,z,alternative="greater",mu=0,paired=F,var.equal=F, conf.level=0.99)
+prueba2
+```
+De modo que para muestras independientes y varianzas distintas el intervalo de confianza es [ 0.2811403, Inf] y no pasa por el cero, indicando que del 99%% de todos los intervalos posibles no incluyen al cero, lo cual está a favor de la hipótesis alternativa. El estádisctico de prueba es t = 6.6368, y el valor p, p-value = 1.699e-11 de modo que podemos rechazar la hipótesis nula. Por lo que sí hay diferencias en las velocidades de viento.
+
+
+**Muestras dependientes**
+Ahora supongamos que son muestras dependientes, pensando en que el flujo de aire a 60m modifica al flujo de aire a 80m y viceversa, o bien que estamos hablando del mismo flujo que se comporta diferente según la altura.
+
+Hagamos la prueba de hipotesis PARAMETRICA para medias con varianza poblacional desconocida. SUPUESTO: normalidad y muestras dependientes.
+
+Como no conocemos la varianza poblacional usaremos entonces el estádistico t, que se distribuye como una t de student.
+
+```{r}
+# II. muestras dependientes
+
+
+
+prueba3<- t.test(y,z,alternative="two.sided",mu=0,paired=T,var.equal=F,conf.level=0.99)
+prueba3
+```
+
+El intervalo de confianza es [0.4124116 0.4534156] y no pasa por el cero, indicando que del 99% de todos los intervalos posible no incluyen al cero, lo cual está a favor de la hipótesis alternativa. El estádisctico de prueba es t = 54.414, y el valor p, p-value =2.2e-16 de modo que podemos rechazar la hipótesis nula. Por lo que sí hay diferencias en las velocidades  de viento.
+
+Discutamos un poco acerca de cómo deberíamos abordar esta comparación a partir de los intervalos de confianza, una cosa sí es un hecho y es que las velocidades a 80m de altura son mayores que a 60m de altura.
+
+El intervalo de confianza para muestras independientes y varianzas distintas es [ 0.2811403, Inf] y para muestras dependientes y con varianzas distintas es de [0.4124116, 0.4534156] amobos con una certeza del 99%. De esto podemos comprobar que al hacer el tratamiento de dependencia el intervalo de confianza se refuce considerablemente, por lo que debemos quedarnos con el desarrollo dependiente.
+
+Pudimos comprobar que efectivamente las velocidades de viento a 60m son estadísticamente mayores que a 60m, y que las varianzas son estadísticamente distintas. Además de que son muestras dependientes.
+
+
+
+Solo por **fines didácticos** asumamos una probabilidad de rechazar una hipótesis correcta del 8%, construyamos las regiones críticas para rechazar la hipótesis nula.
+Como no conocemos la varianza poblacional usaremos entonces el estádistico t, que se distribuye como una t de student. Entonces prueba de hipotesis PARAMETRICA para medias con varianza poblacional desconocida. SUPUESTO: normalidad y muestras dependientes con una certeza del 92% es:
+
+La región crítica queda como describe la imágen.
+
+![texto_alternativo](./t_two_0.08.png){width=1000 height=700}
+Entonces el estadístico de prueba:
+```{r}
+prueba2<- t.test(y,z,alternative="greater",mu=0,paired=F,var.equal=F, conf.level=0.92)
+prueba2
+```
+Como el estadístico de prueba es t = 6.6368, usando la región crítica, rechazamos hipótesis nula si t no está entre [-1.878,1.878], por lo que se rechaza hipótesis nula usando el estadístico de prueba.
+
+El intervalo de confianza para muestras dependientes y varianzas distintas con una certeza del 92% es [  0.3412545, Inf] y para muestras dependientes y con varianzas distintas es de [0.4124116, 0.4534156]  a una certeza del 99%. De esto podemos comprobar que al hacer el tratamiento de dependencia el intervalo de confianza al 99% se reduce considerablemente, por lo que debemos quedarnos con el desarrollo con certeza del 99%.
+
+Al ser mayor la velocidad del viento a 80m de altura conviene poner a esa altura el aerogenerador.
+
+```{r}
+library(Hmisc)
+library(GGally)
+```
+Empecemos con un modelo que contemple las variables:
+
+**WS_80m_mean:** Velocidad del viento a la altura 80  metros.
+
+**WD_78m_mean:** La potencia producida en kW/hora.
+**temp_80m_mean:** la temperatura en grados centígrados
+
+**RH_15m_mean:** La humedad relativa
+
+
+**P_15m_mean:**  Representa la irradiancia. La radiación solar medida en cada una de las estaciones meteorológicas es ofrecida en unidades de potencia y está en vatios por metro cuadrado (W/m²)
+
+
+
+**DENSIDAD_15m_mean:** la densidad del viento [Kg/m^3]. El tipo de variable es cuantitativa y su escala es de razon. Variable continua.
+
+
+
+ Mostremos la matriz de dispersión de todas las variables involucradas y matriz de correlación para ver si el modelo líneal es justificable.
+
+
+
+
+```{r}
+datos <- data.frame(velocidad=WS_80mA_mean,potencia =WD_78m_mean, densidad = DENSIDAD_15m_mean, humedad = RH_15m_mean, irradiancia =  P_15m_mean, tempratura=temp_80m_mean)
+#names(datos) # Nombres de las variables (columnas)
+#datos=cbind(WD_78m_mean, DENSIDAD_15m_mean, RH_15m_mean, P_15m_mean, temp_80m_mean)
+ggpairs(datos, lower = list(continuous = "smooth"))
+```
+
+Una conbinación que nos podría dar problemas más adelante es la de temperatura con potencia, tienen una correlación de 0.569, y podrían no ser independientes. Aunque recordemos que correlación no indica causalidad.
+
+
+
+
+
+```{r}
+
+#WS_80mA_mean ~ WD_78m_mean, DENSIDAD_15m_mean, RH_15m_mean, P_15m_mean, temp_80m_mean
+model1<- lm( WD_78m_mean~WS_80mA_mean + DENSIDAD_15m_mean+ RH_15m_mean+ P_15m_mean+ temp_80m_mean, data = data)  # con todos los predictores
+model1
+```
+
+
+```{r}
+summary(model1)
+```
+Este modelo nos está dando un valor $R^2$ de 0.4731, lo cual nos dice que el modelo es capaz de explicar el 47.31% de la variabilidad. 
++ Intercepto: En promedio, la potencia registrada sube 11,610 unidades independientemente de nuestras variables
++ β1: Por cada unidad adicional de la velocidad, la potencia registrada decrece en promedio por 2.55 unidades.
++ β2: Por cada cambio en la densidad del viento, la potencia registrada decrece en promedio por -6.778e-03 unidades.
++ β3: Por cada cambio en la humedad relativa la potencia registrada sube en promedio 1.368e-02 unidades. 
++ β4:Por unidad de cambio en la irradiancia la potencia registrada decrece en promedio -1.157e+01
++ β5:Pr unidad de cambio en la temperatura la potencia registrada sube en promedio 10 unidades.
+
+
+
+Vemos que lo que menos contribuye a la regresión es la humedad densidad del viento así como la humedad relativa, así que podríamos considerar quitar estas variables para un segundo modelo.
+
+
+Estudiemos la distribución de probabilidad de cada variable involucrada. NOTA: La línea roja es la curva normal teórica y la línea azul es la densidad empírica.
+```{r}
+library(psych)
+multi.hist(x = datos, dcol = c("blue", "red"), dlty = c("dotted", "solid"),lwd=c(2,1),
+           main = c("IQ","Cerebro","Altura","Peso"))
+
+```
+Nos interesa normalidad porque uno de los supuestos es que los errores siguen una distribución normal, y esto se hereda en parte de las varibles regresoras.
+
+
+Primero haremos un diagrama de caja y brazos para los residuos del modelo.
+
+
+
+
+```{r}
+boxplot(model1[['residuals']],main='Residuos',ylab='Valor residual')
+
+
+```
+
+Recordemos que suponemos que los errores de nuestro modelo tienen una distribución normal y en consecuencia sus residuos también, por lo que el diagrama de caja y brazos nos debería mostrar una caja con brazos simétricos, 1er y 3er cuartiles a la misma distancia del cero y una mediana igual a 0. 
+
+##### Verificación de supuestos
+```{r}
+plot(model1, which = 1)
+```
+
+En esta gráfica buscamos verificar la normalidad en los residuos. La línea punteada nos indica la línea teórica de una distribución normal y entre mejor nuestros puntos se distribuyan sobre ésta recta, podemos decir que nuestros residuos tienen una distribución normal.
+Recordemos que ésta gráfica nos perimte revisar si los residuos tienen algún patrón no lineal. Si hay algúna relación no lineal entre las variables regresoras y la respuesta, se verá aquí. En ésta gráfica podemos ver que nuestros residuos muestran un patrón lineal, e inclusive la linea roja se acerca muy bien a la teórica. Por otro lado, notemos que las observaciones 3011, 37 y 3010 se hacen presentes y pueden ser outliers, así que hay que tenerlas en cuenta para las siguientes gráficas.
+```{r}
+plot(model1, which = 2)
+```
+
+En esencia tenemos algunos puntos que se distribuyen muy bien sobre la recta, sin embargo en los extremos tenemos valores que se alejan mucho. Esto podría ser un indicio que uno de los supuestos de nuestro modelo no se están cumpliendo, lo cual nos podría indicar que el modelo es incorrecto o la población de donde se extrajeron los datos no es normal. Sin embargo, a consideración personal, olvidándonos de las observaciones más alejadas, nuestros residuos parecen tener una distribución adecuada. De nuevo las observaciones 37 y 3011,3010 se hacen presentes.
+
+
+```{r}
+plot(model1, which = 3)
+```
+Con ésta gráfica buscamos verificar la homocedasticidad. Ésta gráfica nos permite verificar el supuesto de varianza constante en los resiudos. Como podemos ver,la línea roja tiene un comportamiento casi teórico, pues esta linea idealmente debe de ser horizontal. Además por otro lado, nuestros puntos se presetan como una nube en desorden pero no cubren todo el espacio de forma uniforme. Por lo que podemos concluir que nuestro modelo efectivamente tiene varianza constante en los residuos. Igualmente las observaciones 3011, 37 y 3010 están presentes como observaciones que pueden estar afectando el modelo.
+
+```{r}
+plot(model1, which = 5)
+```
+
+
+Ésta gráfica nos sirve para determinar si hay datos influyentes en la regresión. Graficamente no puedo dar una conclución.
+
+```{r}
+
+```
+Elijamos un segundo modelo, según el criterio de Akaike tenemos que las mejores variables para nuestro modelo son:
+
+```{r}
+step(object = model1, direction = "both", trace = 1)
+```
+
+**WS_80m_mean:** Velocidad del viento a la altura 80  metros.
+
+**WD_78m_mean:** La potencia producida en kW/hora.
+**temp_80m_mean:** la temperatura en grados centígrados
+
+
+
+**P_15m_mean:**  Representa la irradiancia. La radiación solar medida en cada una de las estaciones meteorológicas es ofrecida en unidades de potencia y está en vatios por metro cuadrado (W/m²)
+
+Como habíamos predicho anteriormente, se sugiere quitar a la humedad relativa y la densidad de viento como variables regresoras.
+
+
+Entonces analicemos este modelo
+
+```{r}
+#WS_80mA_mean ~ WD_78m_mean, DENSIDAD_15m_mean, RH_15m_mean, P_15m_mean, temp_80m_mean
+model2<- lm( WD_78m_mean~WS_80mA_mean +  P_15m_mean+ temp_80m_mean, data = data)  # con todos los predictores
+summary(model2)
+
+```
+Cemos que con este modelo se pueden describir mayor parte de la muestra, un 47.33%.
+
+```{r}
+plot(model2)
+```
+Los supuestos parecen ser los mismos que en el modelo 1.
+
+Veamos cuál variable tiene datos atípicos:
+```{r}
+X2 <- data.frame(cbind(WD_78m_mean, P_15m_mean, temp_80m_mean));
+
+X2.labels <- c(WD_78m_mean = "Potencia",
+           P_15m_mean = "Irradiancia",
+           temp_80m_mean = "Temperatura")
+label(X2) <- as.list(X2.labels[match(names(X2), names(X2.labels))])
+
+
+
+label <- 1
+for (variable in X2){
+  boxplot(variable, id.method = 'y', ylab = names(X2)[label], main = X2.labels[label])
+  label <- label + 1
+}
+```
+
+
+
+
+
+
+
+```{r}
+n<- nrow(X2)
+dif.betas <- abs(dfbeta(model2)) > sqrt(2/n)
+
+for (i in 1:ncol(dif.betas)){
+  if (i != 1){
+    influyentes <- which(dif.betas[, i] == TRUE)
+  }
+  else{
+    influyentes <- which(dif.betas[, 1] == FALSE)
+  }
+  print(X2.labels[i-1])
+  print(names(influyentes))
+}
+```
+
+```{r}
+remove <- c( "37" ,  "40" ,  "41" ,  "42"  , "43" ,  "44"  , "45"  , "46" ,  "47"  , "48",   "49","50" ,  "51" ,  "52"  , "53"  , "54"   ,"55"  , "56"  , "57" ,  "1803", "1804", "3007","3008" ,"3010" ,"3011", "3013", "3014" ,"3015", "3016" ,"3017" ,"3018", "3019", "3020","3021" ,"3022", "3023", "3344", "3360","58" ,  "59"  , "3024")
+
+data.nuevo <- data[rownames(data) %nin% remove, ]
+attach(data.nuevo)
+```
+
+
+```{r}
+X3 <- data.frame(cbind(WD_78m_mean, P_15m_mean, temp_80m_mean));
+
+X3.labels <- c(WD_78m_mean = "Potencia",
+           P_15m_mean = "Irradiancia",
+           temp_80m_mean = "Temperatura")
+label(X3) <- as.list(X3.labels[match(names(X3), names(X3.labels))])
+model3<- lm( WD_78m_mean~WS_80mA_mean +  P_15m_mean+ temp_80m_mean, data = data.nuevo)  # con todos los predictores
+summary(model3)
+
+```
+!Vaya! Ahora podemos describir a un 51.72% de los datos.
+
+
+```{r}
+plot(model3)
+```
+```{r}
+n<- nrow(X3)
+dif.betas <- abs(dfbeta(model3)) > sqrt(2/n)
+
+for (i in 1:ncol(dif.betas)){
+  if (i != 1){
+    influyentes <- which(dif.betas[, i] == TRUE)
+  }
+  else{
+    influyentes <- which(dif.betas[, 1] == FALSE)
+  }
+  print(X3.labels[i-1])
+  print(names(influyentes))
+}
+```
+
+
+```{r}
+remove <- c( "60" ,  "61"  , "62" ,  "63" ,  "1057", "1531" ,"1582" ,"1596" ,"1597" ,"1601" ,"1602","1603", "1605" ,"1608" ,"1609", "1610", "1618" ,"1619", "1620", "1622", "1627" ,"2178","2215", "2589" ,"2590", "2591", "2592" ,"2593", "2594", "3028", "3029", "3030" ,"3031", "3034", "3035" ,"3036" ,"3037" ,"3038", "3039" ,"3040","3041", "3042", "3043" ,"3044", "3045" ,"3046" ,"3047" ,"3048", "3049" ,"3050" ,"3051" ,"3052" ,"3053", "3055", "3056", "3057" ,"4070" ,"4181", "4187" ,"4194" ,"4195")
+
+data.nuevo <- data[rownames(data) %nin% remove, ]
+attach(data.nuevo)
+```
+```{r}
+X4 <- data.frame(cbind(WD_78m_mean, P_15m_mean, temp_80m_mean));
+
+X4.labels <- c(WD_78m_mean = "Potencia",
+           P_15m_mean = "Irradiancia",
+           temp_80m_mean = "Temperatura")
+label(X4) <- as.list(X4.labels[match(names(X4), names(X4.labels))])
+model4<- lm( WD_78m_mean~WS_80mA_mean +  P_15m_mean+ temp_80m_mean, data = data.nuevo)  # con todos los predictores
+summary(model4)
+
+```
+Acá notamos que bajó el porcentaje de datos descritos a un 49.61%
+```{r}
+plot(model4)
+```
+
+
+Los supuestos parecen mantenerce en este modelo.
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+```{r}
+
+```
+
+
+
+```{r}
+n<- nrow(X2)
+dif.betas <- abs(dfbeta(model2)) > sqrt(2/n)
+
+for (i in 1:ncol(dif.betas)){
+  if (i != 1){
+    influyentes <- which(dif.betas[, i] == TRUE)
+  }
+  else{
+    influyentes <- which(dif.betas[, 1] == FALSE)
+  }
+  print(X2.labels[i-1])
+  print(names(influyentes))
+}
+```
+
+En un siguiente modelo eliminemos los datos atípicos de la irradiancia que parecen ser los más influyendes del diagrama de caja y brazos. 
+
+
+
+
+
+
+| Ecuación             | Inferencia individual y conjunta| $R^2$ | Supuestos |
+|-------------------|-------------|---------------|--------------|
+|Potencia+densidad+humedad+irradiancia+temperatura   | Nintendo    | 0.4731            | Normalidad
+Homogeneidad|
+| Potenciairradiancia+temperatura         | Atlus       | 0.4733           |Normalidad
+Homogeneidad    | 
+| Potenciai+rradiancia+temperatura    borrando outliers de irradiancia       | Atlus       | 0.5271           |Normalidad
+Homogeneidad|
+| Potencia+irradiancia+temperatura    borrando outliers de potencia     | Atlus       | 0.4961           |Normalidad
+Homogeneidad  |
+
+
+
+
+
+
+
+## REFERENCIAS
+
+https://es.wind-turbine-models.com/turbines/19-vestas-v80-2.0

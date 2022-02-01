@@ -1,0 +1,513 @@
+---
+title: "Actividad 2"
+author: "Chávez Bartolo Julieta Janeth"
+date: "05/01/2022"
+output: 
+  html_document: 
+    highlight: zenburn
+    theme: spacelab
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+library(datasets)
+```
+
+```{r}
+exodatos<- read.csv(unz("./Datos/Exo.zip","Planetary_systems.csv"), header=T, skip=290)
+attach(exodatos)
+# Seleccionamos algunas de las columnas
+
+library(dplyr)
+
+exodatos<- select(exodatos, pl_name, discoverymethod, 
+                 sy_pnum, pl_masse, pl_eqt)   # library(dplyr)
+names(exodatos)
+```
+
+
+
+
+```{r}
+# Opciones globales en graficas
+par(mar=c(5.1,5,4.1,2.1),font=3,family="sans",bg="yellow") 
+```
+
+### a) [5 puntos] Determina cual es el tipo de variable y su escala de medi-
+ción.
+
+Masa es un tipo de variable cuantitativa continua y su escala de medición es de razón. R la registra como una variaple tipo numérica. 
+
+### b) [15 puntos] De acuerdo al tipo de variable, aplica las herramientas
+de análisis exploratorio (medidas de resumen, de tendencia central,
+dispersión y gráficas) e interpreta los resultados.
+
+```{r}
+tail(exodatos)    # ver los ultimos 6 renglones del conjunto de datos
+```
+
+Notemos que la variable pl_masse cuenta con NA's de modo que habrá que limpiarlas.
+
+
+
+
+```{r}
+#Exploremos pl_mase
+attach(exodatos) # con el attach ya puedo accesar a los nombres de las variables
+
+```
+
+
+Cambiemos el nombre de la variable "pl_masse" a "masa".
+
+```{r}
+
+
+#        NUEVO                 # ANTERIOR
+exom<- rename(exodatos, masa       = pl_masse)
+
+names(exom)
+```
+
+
+```{r}
+attach(exom)
+masa[3] #Imprimamos el renglon 3 de la variable masa
+```
+
+
+```{r}
+head(exom)
+```
+
+A simple vista notamos que existen planetas repetidos, para eliminar el sesgo en planetas con pocas repeticiones, nos quedaremos unicamente con un planeta de cada uno.
+
+```{r}
+exom2 <- exom %>% group_by(pl_name) %>%   # %>% operador pipe
+  filter (! duplicated(pl_name))       # library(dplyr)
+                                                 
+head(exom2)
+```
+De modo que lo hemos solucionado.
+
+```{r}
+library("skimr")
+skimr::skim(exom)
+```
+Con esto nos cercioramos de que efectivamente la cantidad de datos faltantes es importante y no podríamos simplemente borrarlos en caso de ocupar otra variable pues nos quedaríamos unicamente con el 8.84% de los datos.
+
+## Tabla de frecuencias, Análisis tabular y gráfico
+
+```{r}
+attach(exom2)
+detach(exom)
+detach(exodatos)
+
+head((tabla_m <- table(masa)))  # tabla de frecuencias absolutas, imprimamos las primeras 5 pues son muchas
+```
+
+
+
+
+```{r}
+head(tablar_m <- prop.table(tabla_m)) # tabla de frecuencias relativas
+```
+```{r}
+library(fdth)
+(tabla_contm<- fdt(na.omit(masa),breaks="FD",right=T))
+```
+Obtengamos el rango para segmentar el histograma
+
+```{r}
+range(na.omit(masa))
+```
+Lo que podemos interpretar de esta gráfica, del primer renglón, es que el 34.7% de los planetas tienen 137.71107 veces la masa de la tierra. Y del segundo renglón que el 54.03% de los planetas tienen a lo más 275.09939 veces la masa de la tierra.
+
+
+
+
+El histograma muestra el perfil de la distribución de probabilidad que mejor describe a la variable.
+
+
+```{r}
+hist(na.omit(masa),probability=T,col="grey50",
+     main="Masa de planetas",
+     xlab="masa (Masa de la Tierra)")  # histograma cuyo eje vertical esta en escala
+# de "probabilidades".
+
+lines(density(na.omit(masa)),lwd=2,col="blue")   # curva de densidad de probabilidad
+```
+Y acá observamos el histograma cuyo eje y representa la frecuencia absoluta.
+```{r}
+library(UsingR)
+simple.freqpoly(na.omit(masa),col=heat.colors(6))
+```
+
+
+
+
+
+
+Aprovechando la tabla de frecuencias con intervalos de clase y su histograma, vale la pena revisar la siguiente gráfica: ojiva
+
+
+```{r}
+library(agricolae)
+
+hist_masa<- hist(na.omit(masa))
+```
+
+
+
+
+```{r}
+ogive.freq(hist_masa,main="Ojiva (masa)",xlab="Límite superior de
+           la clase",ylab="Pi (%)")   
+```
+Veamos otras gráficas que ytambién se pueden hacer en el caso discreto. Por ejemplo la gráfica de puntos.
+
+```{r}
+library(BHH2)
+dotPlot(masa,pch=16,col=10)   # libreria(BHH2)
+```
+
+
+O el diagrama de tallo y hojas.
+
+```{r}
+stem(masa)   # tallo-hojas
+```
+
+
+```{r}
+boxplot(masa,horizontal = T,col="lightgreen")
+boxplot(na.omit(masa),horizontal = T,col="lightgreen") # no afectan NA's
+```
+
+Vemos con el gráfico de cajas que existen muchos datos atípicos a la derecha.
+### Medidas descriptivas
+"La moda"
+```{r}
+library(fdth)
+mfv(na.omit(masa))
+```
+
+¿Tiene sentido para una variable continua?
+
+Nótese que si las observaciones se redondean es posible que encontremos un valor que se repita varias veces. El programa R lo que hace es redondear hacia abajo (floor) y con ello localiza la moda. Esto no es adecuado.
+
+Si conocemos la distribución de probabilidad para la variable “Ozono”, entonces basta con derivarla para tener el valor que maximiza su probabilidad. ¿Y si no, qué hacemos?
+
+Respuesta: usamos su tabla de frecuencias
+Habiamos visto que
+```{r}
+head(tabla_contm)  # para seleccionar una parte de los datos   # tabla de frecuencias para datos agrupados por intervalos de clase
+```
+
+
+
+
+```{r}
+str(tabla_contm)    # para ver como debemos llamar a cada elemento
+```
+
+Indica el renglon cuya frecuencia absoluta, f, es maxima
+```{r}
+which.max(tabla_contm$table$f)  # indica el renglon cuya frecuencia absoluta, f, es maxima
+```
+Lo cual es ecidente en los histogramas, se puede concluir que la mayoría de los planetas, siendo especificos el 34.7% de los planetas tienen masas en el intervalor (0.32274,137.71107]) más cercano al de la tierra.
+
+
+
+```{r}
+tabla_contm$table$`Class limits`[which.max(tabla_contm$table$f)] # indica la CLASE MODAL
+```
+Comparamos los resultados (sin agrupar y agrupados) y claramente son ¡MUY DISTINTOS!
+
+
+Media:
+```{r}
+mean(na.omit(masa)); mean(masa, na.rm=T)
+```
+mean(na.omit(Ozono)); mean(Ozono, na.rm=T)
+
+Cuantiles y Amplitud intercuartílica'
+
+```{r}
+quantile(na.omit(masa), probs = c(0.25,0.50,0.75))
+```
+Varianza y desviación estándar 
+
+```{r}
+var(na.omit(masa)); sd(na.omit(masa))
+```
+
+
+
+
+```{r}
+mean(abs(na.omit(masa)-mean(na.omit(masa))))   # error medio (media)
+```
+
+
+```{r}
+mean(abs(na.omit(masa)-median(na.omit(masa))))  # error medio (mediana)
+```
+
+
+
+
+```{r}
+mean(abs(na.omit(masa)-mfv(na.omit(masa))))  # error medio (moda) OJO!!!
+```
+
+Coeficiente de variación
+```{r}
+c.v<- sd(masa,na.rm=T)/mean(masa, na.rm=T); c.v
+```
+
+
+   ####  Asimetría y curtosis
+
+    Coeficiente de asimetría
+
+
+
+Confirma la asimetría a la izquierda
+```{r}
+(j3<- moments::skewness(masa,na.rm=T))
+```
+kurtosis
+
+```{r}
+(j4<- moments::kurtosis(masa,na.rm=T))
+```
+
+Siendo entonces una distribución más bien Leptokurtica o angosta.
+
+
+```{r}
+fivenum(na.omit(masa)) # minimum, lower-hinge, median, upper-hinge, maximum)
+```
+
+
+```{r}
+summary(masa)
+```
+
+# c) [5 puntos]
+Divide el rango de masas en 4 y utilízalo como límite
+para segmentar la variable en cuatro diferentes categorías, ordenadas
+por tamaño: chico, mediano, grande, súper. ¿Qué tipo de variable es
+ahora?, ¿cuántos planetas hay en cada categoría?
+
+Veamos de nuevo el rango de la masa de los planetas
+```{r}
+range(na.omit(masa))
+```
+Habremos de dividirlo en 4.Yo lo haré como sigue:
+
+Velocidad del viento (km/h)   |  Descripción
+------------------------------|------------------------------
+     	(0,3400]                |   Chico	
+	    (3400,6800)	      |    Mediano
+	    (6800,10200])	      |    Grande
+	    (10200-13604]         |    Súper	
+	
+
+```{r}
+TipoPlaneta <- NA
+TipoPlaneta[masa >= 0 & masa <= 3400] <- "Chico"   
+TipoPlaneta[masa > 3400 & masa <= 6800] <- "Mediano"  
+TipoPlaneta[masa > 6800 & masa <= 10200] <- "Grande"    
+TipoPlaneta[masa > 10200 & masa <= 13604] <- "Súper" 
+TipoPlaneta
+```
+Quitemos los NAś
+
+
+
+
+
+
+```{r}
+TipoPlaneta <- na.omit(TipoPlaneta)
+TipoPlaneta
+```
+
+
+```{r}
+masa<-na.omit(masa)
+masa
+```
+
+
+
+
+```{r}
+library(dplyr)
+# Ahora si ordenamos las columnas
+datos<- cbind(masa,TipoPlaneta)
+
+
+head(datos)
+```
+
+
+```{r}
+library(naniar)
+
+pct_miss(datos) #Datos faltantes
+
+
+```
+Vemos que hay 0 datos faltantes.
+
+### ¿Qué tipo de variable es ahora?
+Ahora es una variable cualitativa y su escala de medición es Ordinal. R la identifica ahora como una variable categórica.
+
+### ¿cuántos planetas hay en cada categoría?
+La respuesta está en la tabla de frecuencias absolutas 
+
+```{r}
+(tabla_tv <- table(TipoPlaneta))  # tabla de frecuencias absolutas
+```
+
+
+
+# d) [15 puntos] 
+Realiza el análisis exploratorio correspondiente de acuerdo al nuevo tipo de variable obtenida.
+
+#### Análisis estadístico de las variables cualitativas
+
+```{r}
+(tablar_tv <- round(prop.table(tabla_tv),digits=2)) # tabla de frecuencias relativas
+```
+
+
+```{r}
+levels(as.factor(TipoPlaneta))
+```
+
+
+
+Diagrama de barras
+
+
+
+```{r}
+barplot(tabla_tv,col=3:5)
+
+title("Tipo de Planeta \n (Frecuencias Absolutas)")
+```
+
+
+```{r}
+barplot(tablar_tv,col=3:5)
+title("Tipo de Planeta \n (Frecuencias Relativas)")
+
+
+```
+tienen sentido: moda y mediana (o cualquier porcentil)
+
+
+Moda
+```{r}
+mfv(TipoPlaneta)   
+```
+La mayoría de los planetas son de tamaño "Chico".
+
+
+    Mediana (porcentiles en general)
+
+Esta variable es ordinal por lo que tiene sentido utilizar esta medida de resumen, sin embargo no se podrá calcular a menos que las categorías tengan asignado un número.
+
+```{r}
+Tipo <- NA
+Tipo[TipoPlaneta=="Chico"] <- 1   
+Tipo[TipoPlaneta=="Mediano"] <- 2
+Tipo[TipoPlaneta=="Grande"] <- 3
+Tipo[TipoPlaneta=="Súper"] <- 4
+
+
+Tipo[1:10]   # primeros 10 datos
+```
+
+
+
+
+```{r}
+median(Tipo); median(TipoPlaneta)
+```
+
+
+```{r}
+quantile(Tipo,prob=c(0.10,0.25,0.5,0.75)) 
+```
+
+
+# e) [10 puntos] 
+¿Cuáles son las principales diferencias al realizar el primer análisis y el segundo?, ¿se pueden hacer las mismas conclusiones?
+
+El primer análisis es mucho más exacto, sin embargo para motivos ilustrativos el segundo análisis ha sido mucho más digerible de entender. 
+
+Sí se pudieran hacer las mismas concluciones estableciendo reglas de relación. Y esto es posible solo porque tenemos, la variable más "completa de todas", una variable cuantitativa y discreta por esa razón pudimos desender en escala a una cualitativa ordinal, si partieramos de la segunda varible no sería posible. 
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+```{r}
+masa
+```
+
+
+```{r}
+
+```
+
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```

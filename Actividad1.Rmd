@@ -1,0 +1,61 @@
+---
+title: "Actividad 1"
+author: "Chávez Bartolo Julieta Janeth"
+date: "5 de octubre 2021"
+output: 
+  html_document: 
+    highlight: zenburn
+    theme: spacelab
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+#1,a)
+f <- function(x, y) {
+  # función que calcula x elevado a y
+  res =( 2*sin(y^2))+(8/(1+x^2+y^2))
+  paste(x, y ,"en radianes evaluados en f es", res)
+}
+#1,b)
+f(-2,3/4)
+
+
+```
+
+
+```{r}
+#1,c)
+f <- function(x, y) {
+  # función que calcula x elevado a y
+  res =( 2*sin(y^2))+(8/(1+x^2+y^2))
+  return(res)
+}
+
+x <- y <- seq(-1, 1, length= 50)
+z <- outer(x, y, f)   # evalua la funcion usando los valores de "x", "y"
+persp(x, y, z,
+      main="Gráfica función f(x,y)",xlab="X",ylab="Y",
+      zlab = "f(x,y)",
+      theta = 0, phi = 15,
+      col = 30,shade=0.5)
+
+```
+
+```{r}
+#2
+w=c(seq(-2,0,0.05),seq(1,2,0.1),seq(2.25,4.25,1),seq(5,10,0.2)); w
+#2,i)
+v=c("La longitud del vector es", length(w));v
+
+```
+
+```{r}
+#2,ii)
+u=w[w<9.5 & w>=-1.3];u
+d=c("El resultado de su suma es", sum(u));d
+
+```

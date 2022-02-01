@@ -1,0 +1,211 @@
+---
+title: "Actividad 3"
+author: "Chávez Bartolo Julieta Janeth"
+date: "10/1/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# PROBLEMA 1
+### b)
+```{r}
+fmp1<-function(w){
+  c=30
+  if (w>0 & w<=4){ #Primer condición
+    f=2*w/c
+  } else if (w>=5 & w<=8){ #Segunda condición
+    f=(9-w)/c
+  } else {
+    f=0 #Cuando w está fuera del soporte
+  }
+  f  #Devuelve el valor
+  
+}
+```
+
+
+Evaluemos la funcion
+
+```{r}
+w<-c(1,2,3,4,5,6,7,8)
+pw<-c(fmp1(1),fmp1(2),fmp1(3),fmp1(4),fmp1(5),fmp1(6),fmp1(7),fmp1(8))
+tab_p<-cbind(w,pw)
+tab_p
+```
+```{r}
+plot(w,pw,type="h",ylab = "Función masa de probabilidad´",col="green")
+```
+
+Confirmemos que la suma sea 1
+
+```{r}
+sum(pw)
+```
+Calculemos el promedio
+```{r}
+EX=sum(pw)/8
+EX
+```
+
+Hagamos una funcion para calcular la varianza
+
+```{r}
+Var<-function(x,fx){
+  EX2=sum(x^2*fx)
+Var=EX2-EX^2
+Var
+}
+
+```
+
+De modo que la varianza es:
+```{r}
+Var(w,pw)
+```
+
+Y la desviacion estandar:
+
+
+```{r}
+sw<-sqrt(Var(w,pw));sw
+```
+
+
+
+Para calcular la moda:
+
+
+
+```{r}
+Moda=tab_p[which.max(tab_p[,2])];Moda
+```
+# c) (8 puntos)
+Calcula la distribucion de probabilidad acumulada de W. Grafıcala.
+Para el calculo de la mediana es necesaria la grafica de la distribucion acumulada
+
+```{r}
+Fw=cumsum(pw)
+plot(w,Fw,type = "s",ylab = "Función de probabilidad acumulada",col="red")
+abline(h=0.5,col="green")
+```
+
+Donde vemos que el valor más cercano a la linea con valor 0.5 es el correspondiente a w=3.
+
+```{r}
+Mediana=3;Mediana
+```
+# d) (10 puntos)
+Usando la comparacion de la media, moda y mediana, indica si la distribucion
+es simetrica o asimetrica. En el caso de asimetrıa, ¿es hacia la derecha o hacia la izquierda?
+
+Hagamos un arreglo con la moda, mediana, media. EX=Media
+```{r}
+sim=cbind(EX,Mediana,Moda);sim
+```
+De modo que en este caso:
+Media<Mediana<Moda
+
+De modo que es asimetrica a la izquierda
+
+# e) (5 puntos)
+Calcula P(2 menor W <= 7)
+
+Usamos la propiedad de calculo de probabilidades. Donde se usan los valores de la funcion acumulada. Que dice que:
+ P(2  < w <= 7)=P(w<=7)-P(w<=2).
+ 
+ De la Acumulada obtenemos P(w <=7):
+
+```{r}
+Fw[7]
+```
+
+
+Y tambien P(w <= 2)
+
+```{r}
+Fw[2]
+```
+
+De modo que de hacer la cuenta nos da la probabilidad de P(2 <w<= 7)
+```{r}
+Fw[7]-Fw[2]
+```
+
+# PROBLEMA 2
+
+## b)
+Si tomamos una muestra de 10 personas que han sido expuestas a 420 unidades de radiacion, ¿cual es la probabilidad de que de los 10 sobrevivan la mitad o mas, y el resto muera?
+
+
+P(Y>=5)=1-P(Y>=4)
+```{r}
+1-pbinom(q=4,size=10,prob=0.1293,lower.tail = T)  #Toma desde el 0 hasta el 4
+```
+O bien:
+
+```{r}
+Vida=pbinom(q=4,size=10,prob=0.1293,lower.tail = F);Vida #Toma desde el 5 hasta la cola, 10
+```
+De modo de que la probabilidad de que el resto muera es el complemento.
+
+
+
+```{r}
+Muerte=1-Vida;Muerte
+```
+
+
+```{r}
+
+```
+
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
